@@ -256,4 +256,16 @@ public class CICDService {
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
+
+    public ResponseEntity<?> startCheckmarxScan(ProjectMetadata projectMetadat, long codeProjectid, Principal principal) {
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectid);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject.get(), projectMetadat.getBranch());
+            log.info("[CICD] Starting SAST scan for {} [{}]", codeProject.get().getName(), codeProject.get().getRepoUrl());
+            codeScanService.runScan(codeProject.get(),codeProjectBranch, projectMetadat, principal);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
 }

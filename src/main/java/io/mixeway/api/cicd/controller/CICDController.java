@@ -153,4 +153,15 @@ public class CICDController {
                                                 Principal principal) throws UnknownHostException {
         return cicdService.loadKicsReport(kicsReport, codeProjectid, principal);
     }
+    /**
+     * Validate State of security for given CodeProject and Branch
+     */
+    @CrossOrigin(origins="*")
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/asset/{id}/checkmarx/start",produces = "application/json")
+    public ResponseEntity<?> startCheckmarxScan(@RequestBody ProjectMetadata projectMetadat,
+                                            @PathVariable("id") long codeProjectid,
+                                            Principal principal) throws UnknownHostException {
+        return cicdService.startCheckmarxScan(projectMetadat, codeProjectid, principal);
+    }
 }

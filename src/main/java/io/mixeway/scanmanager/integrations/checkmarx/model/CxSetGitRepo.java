@@ -6,6 +6,7 @@
 package io.mixeway.scanmanager.integrations.checkmarx.model;
 
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.CodeProjectBranch;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,14 @@ public class CxSetGitRepo {
         } else {
             this.branch = "refs/heads/" + codeProject.getBranch();
         }
+    }
+    public CxSetGitRepo(CodeProject codeProject, String pass, CodeProjectBranch codeProjectBranch){
+        if (pass != null){
+            this.url ="https://"+pass+"@"+codeProject.getRepoUrl().split("://")[1];
+        } else {
+            this.url = codeProject.getRepoUrl();
+        }
+        this.branch = "refs/heads/" + codeProjectBranch.getName();
     }
 
 }

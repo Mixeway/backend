@@ -97,6 +97,23 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
     }
 
+    @Override
+    public Boolean runScan(CodeProject codeProject, CodeProjectBranch codeProjectBranch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+        Optional<Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
+        boolean hasToCreateProject = codeProject.getVersionIdAll() == 0 && codeProject.getRemoteid() ==0;
+        if (cxSast.isPresent()){
+            if (hasToCreateProject){
+                createProject(cxSast.get(),codeProject);
+            }
+            setGitRepositoryForProject(cxSast.get(),codeProject, codeProjectBranch);
+
+            return createScan(cxSast.get(),codeProject);
+        } else {
+            log.error("[Checkmarx] Checkmarx detected but no scanener found");
+            return false;
+        }
+    }
+
     /**
      * condition has to be fixed
      */
@@ -213,6 +230,28 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         String passwordString = getPasswordStringForCodeProejct(codeProject);
         HttpEntity<CxSetGitRepo> cxSetGitRepoHttpEntity = new HttpEntity<>(new CxSetGitRepo(codeProject, passwordString), codeRequestHelper.getHttpEntity().getHeaders());
+        ObjectMapper mapper = new ObjectMapper();
+        log.debug("[Checkmarx] Setting git repo {}", mapper.writeValueAsString(cxSetGitRepoHttpEntity));
+        codeRequestHelper.setHttpEntity(cxSetGitRepoHttpEntity);
+        try {
+            int remoteId = (codeProject.getRemoteid() == 0) ? codeProject.getVersionIdAll() : (codeProject.getVersionIdAll() == 0) ? codeProject.getRemoteid() : codeProject.getVersionIdAll();
+            ResponseEntity<String> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + remoteId + "/sourceCode/remoteSettings/git", HttpMethod.POST, codeRequestHelper.getHttpEntity(), String.class);
+            log.info("[Checkmarx] Setting GIT repo for {} result {}", codeProject.getName(), response.getStatusCode());
+        } catch (Exception e){
+            log.error("[Checkmarx] Error setting GIT repo for project {} - {}",codeProject.getName(), e.getLocalizedMessage());
+        }
+    }
+    /**
+     * configure granch and git URL for
+     * @param scanner
+     * @param codeProject
+     */
+    private void setGitRepositoryForProject(Scanner scanner, CodeProject codeProject, CodeProjectBranch codeProjectBranch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        String passwordString = getPasswordStringForCodeProejct(codeProject);
+        HttpEntity<CxSetGitRepo> cxSetGitRepoHttpEntity = new HttpEntity<>(new CxSetGitRepo(codeProject, passwordString, codeProjectBranch), codeRequestHelper.getHttpEntity().getHeaders());
         ObjectMapper mapper = new ObjectMapper();
         log.debug("[Checkmarx] Setting git repo {}", mapper.writeValueAsString(cxSetGitRepoHttpEntity));
         codeRequestHelper.setHttpEntity(cxSetGitRepoHttpEntity);

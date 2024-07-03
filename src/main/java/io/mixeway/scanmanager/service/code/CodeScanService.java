@@ -261,6 +261,41 @@ public class CodeScanService {
         }
     }
 
+    /**
+     * Get the CodeProjects and CodeGroups with inQueue=true
+     * Verify if scan can be run and then runs it.
+     */
+    @Transactional
+    public void runScan(CodeProject codeProject, CodeProjectBranch codeProjectBranch, ProjectMetadata projectMetadata, Principal principal) {
+        Optional<Scanner> codeScanner = getScannerService.getCodeScanners();
+        if (codeScanner.isPresent() && codeScanner.get().getStatus()) {
+            try {
+                if (operateOnCodeProject.canScanCodeProject(codeProject)) {
+                    for (CodeScanClient codeScanClient : codeScanClients) {
+                        if (codeScanClient.canProcessRequest(codeProject)) {
+                            log.info("[CodeScan] Starting scan form CICD [scope {}] {}", codeProject.getName(), codeProject.getName());
+                            codeProject = updateCodeProjectService.removeFromQueueAndStart(codeProject);
+                            codeScanClient.runScan( codeProject, codeProjectBranch);
+                            Scan scan = createScanService.createCodeScan(codeProject, projectMetadata.getBranch(),
+                                    projectMetadata.getCommitId(),Constants.SAST_LABEL,principal );
+                            CiOperations operations = createCiOperationsService.create(projectMetadata, codeProject);
+                            updateCiOperations.putScanOnAPipeline(operations, scan, securityQualityGateway.buildGatewayResponse(new ArrayList<>()));
+
+                            // TODO: create codescan
+                        }
+                    }
+                }
+            } catch (IndexOutOfBoundsException ex) {
+                log.debug("Fortify configuration missing");
+            } catch (HttpClientErrorException ex) {
+                log.warn("HttpClientErrorException with code [{}] during cloud scan job synchro ", ex.getStatusCode().toString());
+            } catch (ParseException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
+                log.warn("Exception came up during running scan {}", e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     /**
      * Method which run scan for given parameters

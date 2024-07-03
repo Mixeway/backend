@@ -20,6 +20,7 @@ import java.util.List;
 public interface CodeScanClient {
     void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns, CodeProjectBranch codeProjectBranch) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException;
     Boolean runScan(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException;
+    Boolean runScan(CodeProject codeProject, CodeProjectBranch codeProjectBranch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException;
     boolean isScanDone(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException;
     boolean canProcessRequest(CodeProject cp);
     boolean canProcessRequest(Scanner scanner);
