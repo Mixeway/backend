@@ -35,7 +35,7 @@ public class DashboardController {
         return dashboardService.getSessionOwner(request.getUserPrincipal().getName());
 
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/stat")
     public ResponseEntity<DashboardStat> getDashboardStat(){
         return dashboardService.getDashboardStat();
