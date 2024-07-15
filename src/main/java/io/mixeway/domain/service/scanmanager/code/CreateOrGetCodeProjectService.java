@@ -7,6 +7,7 @@ import io.mixeway.db.entity.CodeProjectBranch;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectBranchRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.domain.service.assethistory.CreateAssetHistoryService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.utils.CodeGroupPutModel;
@@ -38,6 +39,7 @@ public class CreateOrGetCodeProjectService {
     private final VaultHelper vaultHelper;
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
+    private final CreateAssetHistoryService createAssetHistoryService;
 
 
     public CodeProject getOrCreateCodeProject(Project project, String projectName, String codeDefaultBranch) {
@@ -68,6 +70,7 @@ public class CreateOrGetCodeProjectService {
         CodeProject codeProject = new CodeProject(project, repoName, (branch == null || branch.isEmpty()) ? "master" : branch, null,repoUrl,null,null);
 
         codeProject = codeProjectRepository.saveAndFlush(codeProject);
+        createAssetHistoryService.create(codeProject,0,0,0,0,0,0,0,0,0,0);
         getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getBranch());
         return codeProject;
     }

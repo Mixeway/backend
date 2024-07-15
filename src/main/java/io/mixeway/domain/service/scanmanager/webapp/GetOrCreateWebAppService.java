@@ -4,6 +4,7 @@ import io.mixeway.api.project.model.WebAppPutModel;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.assethistory.CreateAssetHistoryService;
 import io.mixeway.scanmanager.model.CustomCookie;
 import io.mixeway.scanmanager.model.RequestHeaders;
 import io.mixeway.scanmanager.model.WebAppScanHelper;
@@ -32,6 +33,7 @@ public class GetOrCreateWebAppService {
     private final VaultHelper vaultHelper;
     private final WebAppCookieRepository webAppCookieRepository;
     private final WebAppHeaderRepository webAppHeaderRepository;
+    private final CreateAssetHistoryService createAssetHistoryService;
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -243,6 +245,8 @@ public class GetOrCreateWebAppService {
         webApp.setApikey(apiKeyName);
         webApp.setProject(project);
         webApp = webAppRepository.save(webApp);
+        createAssetHistoryService.create(webApp,0,0,0,0,0,0,0,0,0,0);
+
         return webApp;
     }
 }
