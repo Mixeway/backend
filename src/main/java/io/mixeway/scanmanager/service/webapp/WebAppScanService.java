@@ -23,6 +23,7 @@ import io.mixeway.utils.*;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.checkerframework.checker.nullness.Opt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -266,6 +267,24 @@ public class WebAppScanService {
             vulnTemplate.vulnerabilityPersistList(oldVulns, newVulns);
             vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
             log.info("ZAP DAST vulnerabilities loaded/updated/removed for ciid {}",ciid);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        else {
+            log.error("Malformed ZAP DAST JSON report.");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public ResponseEntity<Status> prepareAndLoadZapVulnsId(ZapReportModel loadVulnModel, Long id, Principal principal) throws ParseException {
+        Optional<WebApp> webAppOptional = findWebAppService.findById(id);
+        if (loadVulnModel.getSite() != null && webAppOptional.isPresent()) {
+            WebApp webApp = webAppOptional.get();
+            List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp);
+            List<ProjectVulnerability> newVulns = ZapMapper(loadVulnModel,webApp);
+            zapVulnsRemove(oldVulns);
+            vulnTemplate.vulnerabilityPersistList(oldVulns, newVulns);
+            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+            log.info("[ZAP DAST] vulnerabilities loaded/updated/removed for webapp url {}",webApp.getUrl());
             return new ResponseEntity<>(HttpStatus.OK);
         }
         else {

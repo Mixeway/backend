@@ -106,6 +106,13 @@ public class CICDController {
                                                 Principal principal) throws Exception {
         return cicdService.loadVulnZap(loadVulnModel,ciid,principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value="/loadvulns/zap/{id}")
+    public ResponseEntity<Status> loadVulnsZap (@RequestBody ZapReportModel loadVulnModel,
+                                                @PathVariable(value = "id") Long id,
+                                                Principal principal) throws Exception {
+        return cicdService.loadVulnZapId(loadVulnModel,id,principal);
+    }
 
     /**
      * Validate State of security for given CodeProject and Branch

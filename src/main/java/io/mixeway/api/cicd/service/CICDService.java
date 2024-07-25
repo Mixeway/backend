@@ -169,6 +169,16 @@ public class CICDService {
         return webAppScanService.prepareAndLoadZapVulns(loadVulnModel,ciid,principal);
     }
 
+    /**
+     * ZAP reports
+     */
+
+    @Transactional
+    public ResponseEntity<Status> loadVulnZapId(ZapReportModel loadVulnModel, Long id, Principal principal) throws ParseException {
+        log.info("ZAP DAST JSON report received for ID {}", id);
+        return webAppScanService.prepareAndLoadZapVulnsId(loadVulnModel,id,principal);
+    }
+
     public ResponseEntity<SecurityGatewayResponse> validate(LoadSCA loadSCA, Principal principal) throws UnknownHostException {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(loadSCA.getCodeProjectId());
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
