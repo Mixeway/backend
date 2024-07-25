@@ -107,7 +107,7 @@ public class CICDController {
         return cicdService.loadVulnZap(loadVulnModel,ciid,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
-    @PostMapping(value="/loadvulns/zap/{id}")
+    @PostMapping(value="/loadvulns/zap/webapp/{id}")
     public ResponseEntity<Status> loadVulnsZap (@RequestBody ZapReportModel loadVulnModel,
                                                 @PathVariable(value = "id") Long id,
                                                 Principal principal) throws Exception {
