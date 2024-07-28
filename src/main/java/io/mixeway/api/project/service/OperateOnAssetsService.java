@@ -21,6 +21,7 @@ import io.mixeway.domain.service.scanmanager.webapp.GetOrCreateWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.vulnhistory.OperateOnVulnHistoryService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
 import io.mixeway.utils.PermissionFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,7 +29,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -58,11 +61,15 @@ public class OperateOnAssetsService {
     private final FindCiOperationsService findCiOperationsService;
     private final GetAssetDashboardService getAssetDashboardService;
     private final FindAssetHistoryService findAssetHistoryService;
+    private final OpenSourceScanService openSourceScanService;
 
-    public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
+    public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         String repositoryType = rootNode.path("repositoryType").asText();
         if (repositoryType.equals("single")) {
-            return createSingleCodeProject(rootNode, project, principal);
+            CodeProject codeProject = createSingleCodeProject(rootNode, project, principal);
+            openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
+
+            return codeProject;
         } else if (repositoryType.equals("multiple")) {
             return createMultipleCodeProject(rootNode, project, principal);
         }

@@ -20,7 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.security.Principal;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,7 @@ public class OperateOnAssets {
 
     @PreAuthorize("hasAuthority('ROLE_PROJECT_OWNER')")
     @PostMapping("/create/project/{id}")
-    public ResponseEntity<?> processAsset(@RequestBody String json, @PathVariable("id") Long id, Principal principal) throws IOException {
+    public ResponseEntity<?> processAsset(@RequestBody String json, @PathVariable("id") Long id, Principal principal) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Project> project = findProjectService.findProjectById(id);
         if(project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             JsonNode rootNode = objectMapper.readTree(json);
