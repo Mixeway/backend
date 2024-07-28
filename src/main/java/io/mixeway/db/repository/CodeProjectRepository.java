@@ -61,4 +61,6 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	void updateCodeProjectBranch(@Param("id") Long id, @Param("branch") String branch);
 
     List<CodeProject> findByProjectIn(List<Project> enabledVulnManageProjects);
+
+    List<CodeProject> findByParent(CodeProject codeProject);
 }

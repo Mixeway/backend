@@ -67,4 +67,8 @@ public class FindCodeProjectService {
     public List<CodeProject> findAll() {
         return codeProjectRepository.findAll();
     }
+
+    public List<CodeProject> getProjectChilds(CodeProject codeProject) {
+        return codeProjectRepository.findByParent(codeProject);
+    }
 }

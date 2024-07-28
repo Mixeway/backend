@@ -21,6 +21,7 @@ public class ProjectAssetModel {
     String branch;
     String type;
     String path;
+    String parent;
     String[] scope;
     AssetVulns vulnerabilities;
 
@@ -39,6 +40,7 @@ public class ProjectAssetModel {
                 sscope.add("sast");
             }
         }
+
         AssetVulns assetVulns = new AssetVulns();
         assetVulns.setCritical(crit);
         assetVulns.setMedium(medium);
@@ -52,6 +54,9 @@ public class ProjectAssetModel {
         projectAssetModel.setPath(codeProject.getPath());
         projectAssetModel.setVulnerabilities(assetVulns);
         projectAssetModel.setScope(sscope.toArray(new String[0]));
+        if (codeProject.getParent() != null){
+            projectAssetModel.setParent(codeProject.getParent().getName());
+        }
         return projectAssetModel;
     }
 

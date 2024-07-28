@@ -2,10 +2,7 @@ package io.mixeway.api.project.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mixeway.api.project.model.AssetDashboardModel;
-import io.mixeway.api.project.model.EditProjectAssetModel;
-import io.mixeway.api.project.model.NewVulnerabilityModel;
-import io.mixeway.api.project.model.ProjectVulnTrendChart;
+import io.mixeway.api.project.model.*;
 import io.mixeway.api.project.service.OperateOnAssetsService;
 
 import io.mixeway.api.protocol.cioperations.PrepareCIOperation;
@@ -119,6 +116,12 @@ public class OperateOnAssets {
     @GetMapping("/{id}/{type}/vulnerabilities")
     public ResponseEntity<List<ProjectVulnerability>> getAssetVulnerabilities(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
         return operateOnAssetsService.getAssetVulnerabilities(id, type, principal);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}/cicd/config")
+    public ResponseEntity<MixewayYamlConfigDto> generateCondig(@PathVariable("id") Long id,  @PathVariable("type") String type,Principal principal) throws IOException {
+        return operateOnAssetsService.generateCondig(id, type, principal);
     }
 
 }

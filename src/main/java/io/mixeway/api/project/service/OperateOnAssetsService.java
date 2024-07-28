@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -148,30 +149,37 @@ public class OperateOnAssetsService {
     public List<ProjectAssetModel> getAssetsForProject(Project project) {
         List<ProjectAssetModel> projectAssetModels = new ArrayList<>();
 
-        findCodeProjectService.findByProject(project).forEach(cp -> {
-            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(cp).stream()
-                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
+        // Combine all find service calls into parallel streams to leverage concurrency
+        Stream.concat(Stream.concat(
+                        findCodeProjectService.findByProject(project).parallelStream().map(cp -> {
+                            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(cp).stream()
+                                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
 
-            projectAssetModels.add(new ProjectAssetModel().convertCodeProject(cp, assetHistory.getCrit() + assetHistory.getHigh(),
-                    assetHistory.getMedium(), assetHistory.getLow()));
-        });
+                            return new ProjectAssetModel().convertCodeProject(cp, assetHistory.getCrit() + assetHistory.getHigh(),
+                                    assetHistory.getMedium(), assetHistory.getLow());
+                        }),
+                        findWebAppService.findByProject(project).parallelStream().map(wa -> {
+                            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(wa).stream()
+                                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
 
-        findWebAppService.findByProject(project).forEach(wa -> {
-            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(wa).stream()
-                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
-            projectAssetModels.add(new ProjectAssetModel().convertWebApp(wa,
-                    assetHistory.getCrit() + assetHistory.getHigh(),
-                    assetHistory.getMedium(), assetHistory.getLow(), (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0));
-        });
+                            return new ProjectAssetModel().convertWebApp(wa,
+                                    assetHistory.getCrit() + assetHistory.getHigh(),
+                                    assetHistory.getMedium(), assetHistory.getLow(),
+                                    (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0);
+                        })),
+                findInterfaceService.findByAssetIn(new ArrayList<>(project.getAssets())).parallelStream().map(intf -> {
+                    AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(intf).stream()
+                            .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
 
-        findInterfaceService.findByAssetIn(new ArrayList<>(project.getAssets())).forEach(intf -> {
-            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(intf).stream()
-                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
-            projectAssetModels.add(new ProjectAssetModel().convertInterface(intf, assetHistory.getCrit() + assetHistory.getHigh(),
-                    assetHistory.getMedium(), assetHistory.getLow(), (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0));
-        });
+                    return new ProjectAssetModel().convertInterface(intf, assetHistory.getCrit() + assetHistory.getHigh(),
+                            assetHistory.getMedium(), assetHistory.getLow(),
+                            (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0);
+                })
+        ).forEach(projectAssetModels::add);
+
         return projectAssetModels;
     }
+
 
     public ResponseEntity<?> editCodeProject(EditProjectAssetModel editProjectAssetModel, Optional<CodeProject> codeProject, Principal principal) {
         if (codeProject.isPresent()) {
@@ -442,4 +450,35 @@ public class OperateOnAssetsService {
                         pv -> !pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName())).collect(Collectors.toList()),
                 HttpStatus.OK);
     }
+
+    public ResponseEntity<MixewayYamlConfigDto> generateCondig(Long id, String type,Principal principal) {
+        MixewayYamlConfigDto mixewayYamlConfigDto = new MixewayYamlConfigDto();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    mixewayYamlConfigDto = mixewayYamlConfigDto.buildCodeResponse(codeProject.get(), findCodeProjectService.getProjectChilds(codeProject.get()));
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    MixewayYamlConfigDto.WA wa  = new MixewayYamlConfigDto.WA();
+                    wa.setId(webApp.get().getId());
+                    wa.setBackendUrl(webApp.get().getUrl());
+                    mixewayYamlConfigDto.setWebapp(wa);
+
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(mixewayYamlConfigDto, HttpStatus.OK);
+    }
+
+
 }
