@@ -35,7 +35,7 @@ public class ProjectAssetModel {
             sscope.add("sca");
         }
         if (codeProject.getParent() != null){
-            int parentSast = codeProject.getParent().getVersionIdAll() > 0 ? codeProject.getVersionIdAll() : codeProject.getRemoteid();
+            int parentSast = codeProject.getParent().getVersionIdAll() > 0 ? codeProject.getParent().getVersionIdAll() : codeProject.getParent().getRemoteid();
             if (parentSast > 0) {
                 sscope.add("sast");
             }
