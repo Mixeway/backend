@@ -566,7 +566,7 @@ public class CodeScanService {
                             "Evidence: " +
                             file.getActualValue();
                     ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, description,file.getExpectedValue(),
-                            Constants.VULN_CRITICALITY_CRITICAL,null,file.getName()+":"+file.getLine(),
+                            query.getSeverity(),null,file.getName()+":"+file.getLine(),
                             "", vulnTemplate.SOURCE_IAC, null,codeProjectBranch );
 
                     vulnToPersist.add(projectVulnerability);
