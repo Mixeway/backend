@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -162,7 +163,11 @@ public class OpenSourceScanService {
     public boolean createProjectOnOpenSourceScanner(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest()){
-                return openSourceScanClient.createProject(codeProject);
+                try {
+                    return openSourceScanClient.createProject(codeProject);
+                } catch (Exception connectException){
+                    log.error("[OpenSoourceScanSercivice] Error during creating Project on remote SCA for {} - {}", codeProject.getName(), connectException.getLocalizedMessage());
+                }
             }
         }
         return false;
