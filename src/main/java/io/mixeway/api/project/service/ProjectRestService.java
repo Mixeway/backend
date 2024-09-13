@@ -160,11 +160,10 @@ public class ProjectRestService {
     public ResponseEntity<List<ProjectVulnerability>> showVulnerabilitiesForProject(Long id, Principal principal) {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            List<ProjectVulnerability> vulns;
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).filter(projectVulnerability -> !projectVulnerability.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId()))
-                    .filter(projectVulnerability -> projectVulnerability.getGrade() != 0)) {
-                return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
-            }
+            List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndStatusIdNotAndGradeNot(project.get(), vulnTemplate.STATUS_REMOVED.getId(), 0);
+            return new ResponseEntity<>(vulns, HttpStatus.OK);
+
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
