@@ -3,6 +3,7 @@ package io.mixeway.db.repository;
 import java.util.List;
 import java.util.Optional;
 
+import io.mixeway.api.dashboard.model.ProjectDTO;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	@Query(value="select distinct(p.id) from project p, asset a, interface i where p.id=a.project_id and i.asset_id=a.id and i.scanrunning=true", nativeQuery = true)
 	List<Long> getProjectIdWithScanRunningOnInterface();
 
+
+	@Query("SELECT new io.mixeway.api.dashboard.model.ProjectDTO(p.id, p.ciid, p.name, p.description, p.risk, " +
+			"CASE WHEN p.enableVulnManage = true THEN 1 ELSE 0 END) " +
+			"FROM Project p JOIN p.users u WHERE u.username = :username")
+	List<ProjectDTO> findProjectDTOsByUsername(@Param("username") String username);
+
+	@Query("SELECT new io.mixeway.api.dashboard.model.ProjectDTO(p.id, p.ciid, p.name, p.description, p.risk, " +
+			"CASE WHEN p.enableVulnManage = true THEN 1 ELSE 0 END) " +
+			"FROM Project p")
+	List<ProjectDTO> findAllProjectDTOs();
 }

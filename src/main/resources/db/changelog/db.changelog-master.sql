@@ -1410,3 +1410,8 @@ update assethistory set low=0 where low is null;
 CREATE INDEX idx_project_vulnerability_project_id ON projectvulnerability (project_id);
 CREATE INDEX idx_project_vulnerability_status_id ON projectvulnerability (status_id);
 CREATE INDEX idx_project_vulnerability_grade ON projectvulnerability (grade);
+
+--changeset siewer:add_new_indexes
+CREATE INDEX idx_user_id ON users (id);
+CREATE INDEX idx_users_project_users ON user_project(users_id);
+CREATE INDEX idx_users_project_project ON user_project(project_id);

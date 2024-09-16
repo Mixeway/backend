@@ -55,7 +55,7 @@ public class DashboardController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/projects")
-    public List<Projects> getProjects(Principal principal) {
+    public List<ProjectDTO> getProjects(Principal principal) {
         return dashboardService.getProjects(principal);
     }
 

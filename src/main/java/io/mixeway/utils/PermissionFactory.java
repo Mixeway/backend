@@ -1,5 +1,6 @@
 package io.mixeway.utils;
 
+import io.mixeway.api.dashboard.model.ProjectDTO;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
@@ -140,6 +141,21 @@ public class PermissionFactory {
         } else {
             return new ArrayList<>();
         }
+    }
+
+    public List<ProjectDTO> getProjectForPrincipalWithDTO(Principal principal){
+        Optional<User> userOptional = userRepository.findByUsernameOrApiKey(principal.getName(), principal.getName());
+        if (userOptional.isPresent()) {
+            String permission = userOptional.get().getPermisions();
+            if (Arrays.asList(Constants.ROLE_API, Constants.ROLE_USER, Constants.ROLE_PROJECT_OWNER, Constants.ROLE_EDITOR_RUNNER).contains(permission)) {
+                // Return projects for the user
+                return projectRepository.findProjectDTOsByUsername(principal.getName());
+            } else if (Arrays.asList(Constants.ROLE_ADMIN, Constants.ROLE_AUDITOR).contains(permission)) {
+                // Return all projects
+                return projectRepository.findAllProjectDTOs();
+            }
+        }
+        return Collections.emptyList();
     }
 
     /**

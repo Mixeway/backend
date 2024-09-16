@@ -67,19 +67,8 @@ public class DashboardService {
 
         return findVulnHistoryService.getSourceTrendData(principal);
     }
-    public List<Projects> getProjects(Principal principal) {
-        List<Projects> projects = new ArrayList<>();
-        for (Project p : permissionFactory.getProjectForPrincipal(principal)){
-            Projects projects1 = new Projects();
-            projects1.setId(p.getId());
-            projects1.setCiid(p.getCiid());
-            projects1.setName(p.getName());
-            projects1.setDescription(p.getDescription());
-            projects1.setRisk(p.getRisk());
-            projects1.setEnableVulnManage(p.isEnableVulnManage() ? 1 : 0 );
-            projects.add(projects1);
-        }
-        return projects;
+    public List<ProjectDTO> getProjects(Principal principal) {
+        return permissionFactory.getProjectForPrincipalWithDTO(principal);
     }
 
     public ResponseEntity<Status> putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, Principal principal) {
