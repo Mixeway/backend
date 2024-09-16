@@ -27,6 +27,7 @@ import io.mixeway.utils.PermissionFactory;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.parameters.P;
@@ -35,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -146,18 +149,41 @@ public class DashboardService {
     public ResponseEntity<DashboardTopStatistics> getRootStatistics(Principal principal) {
         DashboardTopStatistics dashboardTopStatistics = new DashboardTopStatistics();
 
-        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.getLatestVulnerabilitiesForProjects(permissionFactory.getProjectForPrincipal(principal));
+        // Fetch projects for the principal
+        List<Project> projects = permissionFactory.getProjectForPrincipal(principal);
 
-        StatisticCard statisticCard = new StatisticCard(
-          findProjectService.count(),
-          getScanNumberService.getNumberOfScansRunning(),
-          getScanNumberService.getNumberOfScansInQueue(),
-          vulnTemplate.projectVulnerabilityRepository.countVulns()
-        );
-        dashboardTopStatistics.setStatisticCard(statisticCard);
-        dashboardTopStatistics.setProjectVulnerabilityList(projectVulnerabilities.stream().limit(5).collect(Collectors.toList()));
-        return new ResponseEntity<>(dashboardTopStatistics, HttpStatus.OK);
+        // Fetch the top 5 latest vulnerabilities with pagination
+        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository
+                .getLatestVulnerabilitiesForProjects(projects, PageRequest.of(0, 5));
+
+        // Parallelize service calls
+        CompletableFuture<Long> projectCountFuture = CompletableFuture.supplyAsync(() -> findProjectService.count());
+        CompletableFuture<Long> scansRunningFuture = CompletableFuture.supplyAsync(() -> getScanNumberService.getNumberOfScansRunning());
+        CompletableFuture<Long> scansInQueueFuture = CompletableFuture.supplyAsync(() -> getScanNumberService.getNumberOfScansInQueue());
+        CompletableFuture<Long> vulnCountFuture = CompletableFuture.supplyAsync(() -> vulnTemplate.projectVulnerabilityRepository.countVulns());
+
+        try {
+            // Wait for all futures to complete
+            CompletableFuture.allOf(projectCountFuture, scansRunningFuture, scansInQueueFuture, vulnCountFuture).join();
+
+            StatisticCard statisticCard = new StatisticCard(
+                    projectCountFuture.get(),
+                    scansRunningFuture.get(),
+                    scansInQueueFuture.get(),
+                    vulnCountFuture.get()
+            );
+
+            dashboardTopStatistics.setStatisticCard(statisticCard);
+            dashboardTopStatistics.setProjectVulnerabilityList(projectVulnerabilities);
+
+            return new ResponseEntity<>(dashboardTopStatistics, HttpStatus.OK);
+        } catch (InterruptedException | ExecutionException e) {
+            // Handle exceptions appropriately
+            Thread.currentThread().interrupt();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     /**
      * Merging two projects. Move all resources in source project to destination project and delete source.
