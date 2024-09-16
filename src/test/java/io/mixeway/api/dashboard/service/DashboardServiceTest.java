@@ -1,6 +1,7 @@
 package io.mixeway.api.dashboard.service;
 
 import io.mixeway.api.dashboard.model.DashboardTopStatistics;
+import io.mixeway.api.dashboard.model.ProjectDTO;
 import io.mixeway.api.dashboard.model.Projects;
 import io.mixeway.api.dashboard.model.SessionOwner;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
@@ -80,7 +81,7 @@ class DashboardServiceTest {
     WebAppScheduler webAppScheduler;
 
     @BeforeAll
-    private void prepareDB() {
+    public void prepareDB() {
         Mockito.when(principal.getName()).thenReturn("dashboard_service");
         User userToCreate = new User();
         userToCreate.setUsername("dashboard_service");
@@ -111,7 +112,7 @@ class DashboardServiceTest {
     @Test
     void getProjects() {
         Mockito.when(principal.getName()).thenReturn("dashboard_service");
-        List<Projects> projects = dashboardService.getProjects(principal);
+        List<ProjectDTO> projects = dashboardService.getProjects(principal);
         assertTrue(projects.size() > 0);
     }
 
