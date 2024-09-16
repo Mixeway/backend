@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -23,7 +24,7 @@ public class User {
 	private String username;
 	private int logins;
 	private int failedLogins;
-	private Set<Project> projects;
+	private Set<Project> projects = new HashSet<>();;
 	private String apiKey;
 
 	@Column(name = "apikey")
@@ -35,7 +36,7 @@ public class User {
 		this.apiKey = apiKey;
 	}
 
-	@ManyToMany
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 			name = "user_project",
 			joinColumns = { @JoinColumn(name = "users_id") },

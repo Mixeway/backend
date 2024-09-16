@@ -34,6 +34,10 @@ public class PermissionFactory {
      * @return boolean
      */
     public boolean canUserAccessProject(Principal principal, Project project){
+        if (project == null || project.getId() == null) {
+            // Handle null project appropriately
+            return false;
+        }
         User user = getUserFromPrincipal(principal);
         if (apiKeyAccessProject(principal,project)){
             return true;
@@ -44,7 +48,10 @@ public class PermissionFactory {
                 user.getPermisions().equals(Constants.ROLE_AUDITOR))){
             return true;
         } else if ( user != null && (user.getPermisions().equals(Constants.ROLE_USER) || user.getPermisions().equals(Constants.ROLE_PROJECT_OWNER) || user.getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
-            return user.getProjects().stream().map(Project::getId).collect(Collectors.toList()).contains(project.getId());
+            return user.getProjects() != null && user.getProjects().stream()
+                    .map(Project::getId)
+                    .anyMatch(id -> id.equals(project.getId()));
+
         } else if (principal.getName().equals(Constants.STRATEGY_SCHEDULER)) {
             return true;
         }else
