@@ -25,12 +25,12 @@ public class MixewayYamlConfigDto {
                     app.setId(cp.getId());
                     app.setName(cp.getName());
                     app.setPath(cp.getPath());
-                    app.setSca_name(cp.getRemotename());
+                    app.setSca_name(cp.getRemotename() != null ? cp.getRemotename() : cp.getdTrackUuid());
                     apps.add(app);
                 }
                 this.code.apps = apps;
                 if (code.apps.isEmpty()){
-                    this.code.sca_name = codeProject.getRemotename();
+                    this.code.sca_name = codeProject.getRemotename() != null ? codeProject.getRemotename() : codeProject.getdTrackUuid();
                 }
 
         } catch (NullPointerException e ){
